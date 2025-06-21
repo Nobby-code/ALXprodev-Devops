@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# API endpoint
+# URL="https://pokeapi.co/api/v2/pokemon/pikachu"
+URL="https://pokeapi.co/api/v2/pokemon/"
+
+# Output files
+OUTPUT="data.json"
+ERROR_LOG="errors.txt"
+
+# Make API request
+curl -s -f "$URL" -o "$OUTPUT"
+
+# Check if the request was successful
+if [ $? -ne 0 ]; then
+    echo "Failed to retrieve data for Pikachu at $(date)" >> "$ERROR_LOG"
+else
+    echo "Pikachu data saved to $OUTPUT"
+fi
