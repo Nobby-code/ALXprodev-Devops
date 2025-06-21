@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # API endpoint
-# URL="https://pokeapi.co/api/v2/pokemon/pikachu"
-URL="https://pokeapi.co/api/v2/pokemon/"
+URL="https://pokeapi.co/api/v2/pokemon/pikachu"
+# URL="https://pokeapi.co/api/v2/pokemon/"
 
 # Output files
 OUTPUT="data.json"
