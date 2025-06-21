@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # File: batchProcessing-0x02
-# Description: Fetch data for multiple Pokémon and save to individual files
+# Description: Fetch data for multiple Pokémon and save to individual files with error handling and retry logic
 
 # List of Pokémon
 pokemon_list=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
@@ -10,22 +10,39 @@ pokemon_list=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
 output_dir="pokemon_data"
 mkdir -p "$output_dir"
 
+# Error log file
+error_log="errors.txt"
+: > "$error_log"  # Clear previous log
+
 # Loop through each Pokémon
 for pokemon in "${pokemon_list[@]}"
 do
     echo "Fetching data for $pokemon..."
+    attempts=0
+    success=false
 
-    # Make API request and save response
-    response=$(curl -s -w "%{http_code}" -o "$output_dir/${pokemon}.json" "https://pokeapi.co/api/v2/pokemon/$pokemon")
-    status_code="${response:(-3)}"
+    # Retry up to 3 times
+    while [ $attempts -lt 3 ]; do
+        response=$(curl -s -w "%{http_code}" -o "$output_dir/${pokemon}.json" "https://pokeapi.co/api/v2/pokemon/$pokemon")
+        status_code="${response:(-3)}"
 
-    # Check if the request was successful
-    if [ "$status_code" = "200" ]; then
-        echo "Saved data to $output_dir/${pokemon}.json ✅"
-    else
-        echo "Failed to fetch data for $pokemon ❌ (Status: $status_code)"
-        rm -f "$output_dir/${pokemon}.json"  # Remove incomplete file
+        if [ "$status_code" = "200" ]; then
+            echo "Saved data to $output_dir/${pokemon}.json ✅"
+            success=true
+            break
+        else
+            echo "Attempt $((attempts+1)) failed for $pokemon ❌ (Status: $status_code)"
+            attempts=$((attempts + 1))
+            sleep 2  # Wait before retrying
+        fi
+    done
+
+    # If all attempts failed
+    if ! $success; then
+        echo "❌ Failed to fetch $pokemon after 3 attempts. Skipping..."
+        echo "$(date) - Failed to fetch $pokemon (Status: $status_code)" >> "$error_log"
+        rm -f "$output_dir/${pokemon}.json"
     fi
 
-    sleep 2  # Delay to avoid API rate limits
+    sleep 2  # Delay to avoid hitting rate limits
 done
